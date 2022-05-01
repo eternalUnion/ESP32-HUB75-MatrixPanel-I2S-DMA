@@ -13,12 +13,7 @@
 #include "esp_heap_caps.h"
 #include "esp32_i2s_parallel_dma.h"
 
-#ifdef USE_GFX_ROOT
-    #include <FastLED.h>    
-    #include "GFX.h" // Adafruit GFX core class -> https://github.com/mrfaptastic/GFX_Root  
-#elif !defined NO_GFX
-    #include "Adafruit_GFX.h" // Adafruit class with all the other stuff
-#endif
+#include "Adafruit_GFX.h" // Adafruit class with all the other stuff
 
 /*******************************************************************************************
  * COMPILE-TIME OPTIONS - MUST BE PROVIDED as part of PlatformIO project build_flags.      *
@@ -50,60 +45,11 @@
  * All of this is memory permitting of course (dependant on your sketch etc.) ...
  *
  */
-#ifndef MATRIX_WIDTH
- #define MATRIX_WIDTH                64   // Single panel of 64 pixel width
-#endif
-
-#ifndef MATRIX_HEIGHT
- #define MATRIX_HEIGHT               32   // CHANGE THIS VALUE to 64 IF USING 64px HIGH panel(s) with E PIN
-#endif
-
-#ifndef CHAIN_LENGTH
- #define CHAIN_LENGTH                1   // Number of modules chained together, i.e. 4 panels chained result in virtualmatrix 64x4=256 px long
-#endif
 
 /* ESP32 Default Pin definition. You can change this, but best if you keep it as is and provide custom pin mappings 
  * as part of the begin(...) function.
  */
 // Default pin mapping for ESP32-S2 and ESP32-S3
-#ifdef ESP32_SXXX 
- 
-    #define R1_PIN_DEFAULT 45
-    #define G1_PIN_DEFAULT 42
-    #define B1_PIN_DEFAULT 41
-    #define R2_PIN_DEFAULT 40
-    #define G2_PIN_DEFAULT 39
-    #define B2_PIN_DEFAULT 38
-    #define A_PIN_DEFAULT  37
-    #define B_PIN_DEFAULT  36
-    #define C_PIN_DEFAULT  35
-    #define D_PIN_DEFAULT  34
-    #define E_PIN_DEFAULT  -1 // required for 1/32 scan panels, like 64x64. Any available pin would do, i.e. IO32
-    #define LAT_PIN_DEFAULT 26
-    #define OE_PIN_DEFAULT  21
-    #define CLK_PIN_DEFAULT 33
-
-// Else use default pin mapping for ESP32 Original WROOM module.
-#else 
-     
-    #define R1_PIN_DEFAULT  25
-    #define G1_PIN_DEFAULT  26
-    #define B1_PIN_DEFAULT  27
-    #define R2_PIN_DEFAULT  14
-    #define G2_PIN_DEFAULT  12
-    #define B2_PIN_DEFAULT  13
-
-    #define A_PIN_DEFAULT   23
-    #define B_PIN_DEFAULT   19
-    #define C_PIN_DEFAULT   5
-    #define D_PIN_DEFAULT   17
-    #define E_PIN_DEFAULT   -1 // IMPORTANT: Change to a valid pin if using a 64x64px panel.
-              
-    #define LAT_PIN_DEFAULT 4
-    #define OE_PIN_DEFAULT  15
-    #define CLK_PIN_DEFAULT 16
-    
-#endif  
 
 // Interesting Fact: We end up using a uint16_t to send data in parallel to the HUB75... but 
 //                   given we only map to 14 physical output wires/bits, we waste 2 bits.
@@ -112,9 +58,7 @@
 /* Do not change definitions below unless you pretty sure you know what you are doing! */
 
 // RGB Panel Constants / Calculated Values
-#ifndef MATRIX_ROWS_IN_PARALLEL
- #define MATRIX_ROWS_IN_PARALLEL     2
-#endif
+#define MATRIX_ROWS_IN_PARALLEL     2
 
 // 8bit per RGB color = 24 bit/per pixel,
 // might be reduced to save DMA RAM
@@ -307,13 +251,13 @@ struct  HUB75_I2S_CFG {
 
   // struct constructor
   HUB75_I2S_CFG (
-    uint16_t _w = MATRIX_WIDTH,
-    uint16_t _h = MATRIX_HEIGHT,
-    uint16_t _chain = CHAIN_LENGTH,
+    uint16_t _w = 64,
+    uint16_t _h = 64,
+    uint16_t _chain = 1,
     i2s_pins _pinmap = {
-      R1_PIN_DEFAULT, G1_PIN_DEFAULT, B1_PIN_DEFAULT, R2_PIN_DEFAULT, G2_PIN_DEFAULT, B2_PIN_DEFAULT,
-      A_PIN_DEFAULT, B_PIN_DEFAULT, C_PIN_DEFAULT, D_PIN_DEFAULT, E_PIN_DEFAULT,
-      LAT_PIN_DEFAULT, OE_PIN_DEFAULT, CLK_PIN_DEFAULT },
+      25, 26, 27, 21, 22, 23,
+      12, 16, 17, 18, 19,
+      32, 33, 15 },
     shift_driver _drv = SHIFTREG,
     bool _dbuff = false,
     clk_speed _i2sspeed = HZ_10M,
@@ -334,14 +278,7 @@ struct  HUB75_I2S_CFG {
 
 
 /***************************************************************************************/   
-#ifdef USE_GFX_ROOT
-class MatrixPanel_I2S_DMA : public GFX {
-#elif !defined NO_GFX
 class MatrixPanel_I2S_DMA : public Adafruit_GFX {
-#else
-class MatrixPanel_I2S_DMA {
-#endif
-
   // ------- PUBLIC -------
   public:
 
@@ -364,12 +301,7 @@ class MatrixPanel_I2S_DMA {
      * default predefined values are used for matrix configuration
      *
      */
-    MatrixPanel_I2S_DMA()
-#ifdef USE_GFX_ROOT
-      : GFX(MATRIX_WIDTH, MATRIX_HEIGHT)
-#elif !defined NO_GFX
-      : Adafruit_GFX(MATRIX_WIDTH, MATRIX_HEIGHT)
-#endif
+    MatrixPanel_I2S_DMA() : Adafruit_GFX(64, 64)
     {}
 
     /**
@@ -379,11 +311,7 @@ class MatrixPanel_I2S_DMA {
      *        
      */
     MatrixPanel_I2S_DMA(const HUB75_I2S_CFG& opts) :
-#ifdef USE_GFX_ROOT 
-      GFX(opts.mx_width*opts.chain_length, opts.mx_height),
-#elif !defined NO_GFX
       Adafruit_GFX(opts.mx_width*opts.chain_length, opts.mx_height),
-#endif        
       m_cfg(opts) {}
 
     /* Propagate the DMA pin configuration, allocate DMA buffs and start data output, initially blank */
@@ -455,7 +383,7 @@ class MatrixPanel_I2S_DMA {
     /*
      *  overload for compatibility
      */
-    bool begin(int r1, int g1 = G1_PIN_DEFAULT, int b1 = B1_PIN_DEFAULT, int r2 = R2_PIN_DEFAULT, int g2 = G2_PIN_DEFAULT, int b2 = B2_PIN_DEFAULT, int a  = A_PIN_DEFAULT, int b = B_PIN_DEFAULT, int c = C_PIN_DEFAULT, int d = D_PIN_DEFAULT, int e = E_PIN_DEFAULT, int lat = LAT_PIN_DEFAULT, int oe = OE_PIN_DEFAULT, int clk = CLK_PIN_DEFAULT);
+    bool begin(int r1, int g1 = 26, int b1 = 27, int r2 = 21, int g2 = 22, int b2 = 23, int a  = 12, int b = 16, int c = 17, int d = 18, int e = 19, int lat = 32, int oe = 33, int clk = 15);
 
 
     // Adafruit's BASIC DRAW API (565 colour format)
