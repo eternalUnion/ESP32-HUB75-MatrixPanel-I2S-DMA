@@ -259,7 +259,7 @@ struct  HUB75_I2S_CFG {
   /**
    * I2S clock speed selector
    */
-  enum clk_speed {HZ_8M = 8000000, HZ_10M=10000000, HZ_20M=20000000};
+  enum clk_speed {HZ_5M = 5000000, HZ_8M = 8000000, HZ_10M=10000000, HZ_20M=20000000};
 
   // Structure Variables
 
@@ -344,6 +344,31 @@ class MatrixPanel_I2S_DMA {
 
   // ------- PUBLIC -------
   public:
+
+    // Custom functions
+    inline int16_t getCursorX() {
+      return cursor_x;
+    }
+
+    inline int16_t getCursorY() {
+      return cursor_x;
+    }
+
+    inline uint8_t getTextSizeX() {
+      return textsize_x;
+    }
+
+    inline uint8_t getTextSizeY() {
+      return textsize_y;
+    }
+
+    inline uint16_t getTextColor() {
+      return textcolor;
+    }
+
+    inline uint16_t getBgTextColor() {
+      return textbgcolor;
+    }
 
     /**
      * MatrixPanel_I2S_DMA
@@ -517,7 +542,7 @@ class MatrixPanel_I2S_DMA {
     static void color565to888(const uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b);
 
 
-    inline void IRAM_ATTR flipDMABuffer() 
+    inline void flipDMABuffer() 
     {         
       if ( !m_cfg.double_buff) return;
         
