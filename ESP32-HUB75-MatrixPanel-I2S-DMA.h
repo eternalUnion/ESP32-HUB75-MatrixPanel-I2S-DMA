@@ -345,33 +345,30 @@ class MatrixPanel_I2S_DMA {
   // ------- PUBLIC -------
   public:
 
-  uint16_t buff[2][4096];
-  int buffIndex = 0;
+    // Custom functions
+    inline int16_t getCursorX() {
+      return cursor_x;
+    }
 
-  inline uint16_t* getFrontBuffer()
-  {
-    return buff[buffIndex ^ 1];
-  }
+    inline int16_t getCursorY() {
+      return cursor_x;
+    }
 
-  inline uint16_t* getBackBuffer()
-  {
-    return buff[buffIndex];
-  }
+    inline uint8_t getTextSizeX() {
+      return textsize_x;
+    }
 
-  inline uint16_t getTextColor()
-  {
-    return textcolor;
-  }
+    inline uint8_t getTextSizeY() {
+      return textsize_y;
+    }
 
-  inline uint16_t getTextSizeX()
-  {
-    return textsize_x;
-  }
+    inline uint16_t getTextColor() {
+      return textcolor;
+    }
 
-  inline uint16_t getTextSizeY()
-  {
-    return textsize_y;
-  }
+    inline uint16_t getBgTextColor() {
+      return textbgcolor;
+    }
 
     /**
      * MatrixPanel_I2S_DMA
@@ -547,7 +544,7 @@ class MatrixPanel_I2S_DMA {
     static void color565to888(const uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b);
 
 
-    void flipDMABuffer() 
+    inline void flipDMABuffer() 
     {         
       if ( !m_cfg.double_buff) return;
         
